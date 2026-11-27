@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tani Sehat — Portal Admin & Tim Kreatif</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+    .tab-active { background-color: #15803d; color: #ffffff; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen">
+
+  <!-- HALAMAN LOGIN -->
+  <div id="loginView" class="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-emerald-50 via-white to-green-100">
+    <div class="w-full max-w-md bg-white rounded-2xl shadow-lg border border-emerald-100 p-8">
+      <div class="flex flex-col items-center text-center mb-6">
+        <div class="w-14 h-14 rounded-2xl bg-emerald-700 text-white flex items-center justify-center text-2xl font-bold shadow">
+          🌿
+        </div>
+        <h1 class="text-2xl font-bold text-slate-900 mt-3">Tani Sehat Web</h1>
+        <p class="text-sm text-slate-500 mt-1">Portal Khusus Administrator & Tim Kreatif</p>
+      </div>
+
+      <form id="loginForm" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Email Akun</label>
+          <input id="emailInput" type="email" required placeholder="admin@tanisehat.com"
+            class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-600 text-sm" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Kata Sandi</label>
+          <input id="passInput" type="password" required placeholder="Minimal 6 karakter"
+            class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-600 text-sm" />
+        </div>
+        <p id="loginError" class="text-xs text-red-600 hidden"></p>
+        <button type="submit"
+          class="w-full py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-semibold text-sm transition">
+          Masuk ke Portal
+        </button>
+      </form>
+
+      <div class="mt-6 pt-5 border-t border-slate-100">
+        <p class="text-xs text-slate-500 text-center mb-3">Akses Cepat Uji Coba Peran:</p>
+        <div class="grid grid-cols-2 gap-2.5">
+          <button onclick="quickLogin('admin')"
+            class="py-2 px-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-semibold text-xs border border-emerald-200 transition">
+            Demo Admin
+          </button>
+          <button onclick="quickLogin('kreatif')"
+            class="py-2 px-3 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 font-semibold text-xs border border-amber-200 transition">
+            Demo Tim Kreatif
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DASHBOARD UTAMA -->
+  <div id="dashboardView" class="hidden min-h-screen flex flex-col">
+    <header class="bg-white border-b border-slate-200 px-6 py-3.5 flex flex-wrap items-center justify-between gap-3 sticky top-0 z-10">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-emerald-700 text-white flex items-center justify-center font-bold">🌿</div>
+        <div>
+          <div class="font-bold text-slate-900 leading-tight">Tani Sehat — Web Portal</div>
+          <div id="roleBadge" class="text-xs text-emerald-700 font-medium">Peran: Admin</div>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button onclick="loadFromServer()"
+          class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-50 hover:bg-emerald-100 text-emerald-800">
+          Sync MySQL
+        </button>
+        <button onclick="switchRoleDemo()"
+          class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700">
+          Ganti Peran
+        </button>
+        <button onclick="logout()"
+          class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-50 hover:bg-red-100 text-red-700">
+          Keluar
+        </button>
+      </div>
+    </header>
+
+    <main class="flex-1 max-w-6xl w-full mx-auto p-6 space-y-6">
+      <p id="statusBanner" class="text-xs text-slate-500"></p>
+
+      <!-- PANEL ADMIN -->
+      <section id="adminPanel" class="hidden space-y-6">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div class="bg-white p-4 rounded-2xl border border-slate-200">
+            <div class="text-xs text-slate-500">Tanaman Didukung</div>
+            <div class="text-xl font-bold text-slate-900 mt-1">3 Tanaman</div>
+            <div class="text-xs text-emerald-700 mt-0.5">Tomat, Kedelai, Jagung</div>
+          </div>
+          <div class="bg-white p-4 rounded-2xl border border-slate-200">
+            <div class="text-xs text-slate-500">Total Produk Obat (MySQL)</div>
+            <div id="statProduk" class="text-xl font-bold text-slate-900 mt-1">0</div>
+          </div>
+          <div class="bg-white p-4 rounded-2xl border border-slate-200">
+            <div class="text-xs text-slate-500">Promo Aktif (MySQL)</div>
+            <div id="statPromo" class="text-xl font-bold text-slate-900 mt-1">0</div>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap gap-2 bg-white p-2 rounded-2xl border border-slate-200">
+          <button onclick="setAdminTab('produk')" id="btn-produk" class="admin-tab tab-active px-4 py-2 rounded-xl text-xs font-semibold">
+            Produk & Stok Obat
+          </button>
+          <button onclick="setAdminTab('promo')" id="btn-promo" class="admin-tab px-4 py-2 rounded-xl text-xs font-semibold text-slate-600">
+            Promo Aktif ke Flutter
+          </button>
+        </div>
+
+        <!-- Tab Produk -->
+        <div id="tab-produk" class="bg-white p-6 rounded-2xl border border-slate-200 space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <h2 class="font-bold text-base">Kelola Produk & Stok Obat (Tersimpan ke MySQL)</h2>
+            <form onsubmit="addProduct(event)" class="flex flex-wrap gap-2">
+              <input id="prodName" required placeholder="Nama obat..." class="px-3 py-1.5 border rounded-lg text-xs" />
+              <select id="prodCat" class="px-3 py-1.5 border rounded-lg text-xs">
+                <option>Fungisida</option>
+                <option>Insektisida</option>
+                <option>Pupuk</option>
+              </select>
+              <input id="prodPrice" type="number" required placeholder="Harga (Rp)" class="px-3 py-1.5 border rounded-lg text-xs w-28" />
+              <input id="prodStock" type="number" required placeholder="Stok" class="px-3 py-1.5 border rounded-lg text-xs w-20" />
+              <button type="submit" class="px-3 py-1.5 bg-emerald-700 text-white rounded-lg text-xs font-semibold">+ Tambah</button>
+            </form>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 text-slate-500 border-b">
+                <tr>
+                  <th class="py-2.5 px-3">ID</th>
+                  <th class="py-2.5 px-3">Nama Produk</th>
+                  <th class="py-2.5 px-3">Kategori</th>
+                  <th class="py-2.5 px-3">Harga</th>
+                  <th class="py-2.5 px-3">Stok</th>
+                  <th class="py-2.5 px-3">Ubah Stok</th>
+                </tr>
+              </thead>
+              <tbody id="productTable" class="divide-y"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Tab Promo Admin -->
+        <div id="tab-promo" class="hidden bg-white p-6 rounded-2xl border border-slate-200 space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h2 class="font-bold text-base">Tayangkan Promo ke Aplikasi Flutter</h2>
+              <p class="text-xs text-slate-500">Promo yang disimpan akan langsung muncul di endpoint promos.php & Flutter.</p>
+            </div>
+            <form onsubmit="publishPromoAdmin(event)" class="flex flex-wrap gap-2">
+              <input id="admPromoTitle" required placeholder="Judul promo..." class="px-3 py-1.5 border rounded-lg text-xs" />
+              <select id="admPromoType" class="px-3 py-1.5 border rounded-lg text-xs">
+                <option>Banner (JPG/PNG)</option>
+                <option>Video Iklan (MP4)</option>
+              </select>
+              <input id="admPromoFile" required placeholder="Nama/URL media..." class="px-3 py-1.5 border rounded-lg text-xs" />
+              <select id="admPromoProduct" class="px-3 py-1.5 border rounded-lg text-xs"></select>
+              <input id="admPromoPrice" type="number" required placeholder="Harga Promo" class="px-3 py-1.5 border rounded-lg text-xs w-28" />
+              <button type="submit" class="px-3 py-1.5 bg-emerald-700 text-white rounded-lg text-xs font-semibold">Simpan Promo</button>
+            </form>
+          </div>
+          <div id="promoAdminList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+        </div>
+      </section>
+
+      <!-- PANEL TIM KREATIF -->
+      <section id="creativePanel" class="hidden space-y-6">
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 space-y-4">
+          <div>
+            <h2 class="font-bold text-base">Kirim Konten Promo ke Database — Tim Kreatif</h2>
+            <p class="text-xs text-slate-500">Materi promo tersimpan ke tabel promo MySQL agar bisa dibaca sistem & Flutter.</p>
+          </div>
+          <form onsubmit="uploadCreativePromo(event)" class="grid grid-cols-1 sm:grid-cols-5 gap-3">
+            <input id="crTitle" required placeholder="Judul Konten Promo..." class="px-3 py-2 border rounded-xl text-xs" />
+            <select id="crType" class="px-3 py-2 border rounded-xl text-xs">
+              <option value="Video Iklan (MP4)">Video Iklan (MP4)</option>
+              <option value="Banner (JPG/PNG)">Banner (JPG/PNG)</option>
+              <option value="Model 3D AR (GLB)">Model 3D AR (GLB)</option>
+              <option value="Konten VR 360°">Konten VR 360°</option>
+            </select>
+            <input id="crFile" required placeholder="Nama / URL file media..." class="px-3 py-2 border rounded-xl text-xs" />
+            <select id="crProduct" class="px-3 py-2 border rounded-xl text-xs"></select>
+            <input id="crPrice" type="number" required placeholder="Harga Promo (Rp)" class="px-3 py-2 border rounded-xl text-xs" />
+            <button type="submit" class="sm:col-span-5 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-semibold">
+              + Simpan Promo ke Database
+            </button>
+          </form>
+        </div>
+
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 space-y-4">
+          <h3 class="font-bold text-sm">Daftar Promo Aktif di Database</h3>
+          <div id="creativeList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const API_BASE = "http://localhost/tanisehat_api";
+    let currentRole = null;
+    let products = [];
+    let promos = [];
+
+    function setStatus(msg) {
+      document.getElementById("statusBanner").textContent = msg;
+    }
+
+    document.getElementById("loginForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+      const email = document.getElementById("emailInput").value.trim().toLowerCase();
+      const pass = document.getElementById("passInput").value;
+      const err = document.getElementById("loginError");
+
+      if (pass.length < 6) {
+        err.textContent = "Kata sandi minimal 6 karakter.";
+        err.classList.remove("hidden");
+        return;
+      }
+      err.classList.add("hidden");
+
+      if (email.includes("kreatif")) {
+        enterRole("kreatif", email);
+      } else if (email.includes("admin")) {
+        enterRole("admin", email);
+      } else {
+        err.textContent = "Gunakan email admin@... atau kreatif@...";
+        err.classList.remove("hidden");
+      }
+    });
+
+    function quickLogin(role) {
+      if (role === "admin") enterRole("admin", "admin@tanisehat.com");
+      else enterRole("kreatif", "kreatif@tanisehat.com");
+    }
+
+    async function enterRole(role, email) {
+      currentRole = role;
+      document.getElementById("loginView").classList.add("hidden");
+      document.getElementById("dashboardView").classList.remove("hidden");
+      document.getElementById("roleBadge").textContent =
+        role === "admin" ? `Peran: Administrator (${email})` : `Peran: Tim Kreatif (${email})`;
+
+      document.getElementById("adminPanel").classList.toggle("hidden", role !== "admin");
+      document.getElementById("creativePanel").classList.toggle("hidden", role !== "kreatif");
+      await loadFromServer();
+    }
+
+    function switchRoleDemo() {
+      enterRole(
+        currentRole === "admin" ? "kreatif" : "admin",
+        currentRole === "admin" ? "kreatif@tanisehat.com" : "admin@tanisehat.com"
+      );
+    }
+
+    function logout() {
+      currentRole = null;
+      document.getElementById("dashboardView").classList.add("hidden");
+      document.getElementById("loginView").classList.remove("hidden");
+    }
+
+    function setAdminTab(tab) {
+      ["produk", "promo"].forEach(t => {
+        document.getElementById("tab-" + t).classList.toggle("hidden", t !== tab);
+        const btn = document.getElementById("btn-" + t);
+        btn.classList.toggle("tab-active", t === tab);
+        btn.classList.toggle("text-slate-600", t !== tab);
+      });
+    }
+
+    async function loadFromServer() {
+      try {
+        setStatus("Menyinkronkan data dengan MySQL...");
+        const [resProd, resPromo] = await Promise.all([
+          fetch(`${API_BASE}/products.php`),
+          fetch(`${API_BASE}/promos.php`)
+        ]);
+        products = await resProd.json();
+        promos = await resPromo.json();
+        renderAll();
+        setStatus("Terhubung ke MySQL (localhost/tanisehat_api).");
+      } catch (err) {
+        setStatus("Gagal terhubung ke API. Pastikan Apache & MySQL di XAMPP menyala.");
+      }
+    }
+
+    function renderAll() {
+      document.getElementById("statProduk").textContent = products.length + " Item";
+      document.getElementById("statPromo").textContent = promos.length + " Aktif";
+
+      document.getElementById("productTable").innerHTML = products.map(p => `
+        <tr>
+          <td class="py-2.5 px-3 font-mono">#${p.id_produk}</td>
+          <td class="py-2.5 px-3 font-semibold">${p.nama_produk}</td>
+          <td class="py-2.5 px-3">${p.kategori}</td>
+          <td class="py-2.5 px-3">Rp ${Number(p.harga).toLocaleString("id-ID")}</td>
+          <td class="py-2.5 px-3 font-bold ${Number(p.stok) === 0 ? "text-red-600" : "text-emerald-700"}">${p.stok}</td>
+          <td class="py-2.5 px-3 flex gap-1.5">
+            <button onclick="updateStock(${p.id_produk}, ${Number(p.stok) + 1})" class="px-2 py-1 bg-emerald-50 text-emerald-700 rounded border border-emerald-200">+1</button>
+            <button onclick="updateStock(${p.id_produk}, ${Number(p.stok) - 1})" class="px-2 py-1 bg-slate-100 text-slate-700 rounded border">-1</button>
+          </td>
+        </tr>
+      `).join("");
+
+      const prodOptions = products.map(p => `<option value="${p.nama_produk}">${p.nama_produk}</option>`).join("");
+      document.getElementById("admPromoProduct").innerHTML = prodOptions;
+      document.getElementById("crProduct").innerHTML = prodOptions;
+
+      const promoCards = promos.map(pr => `
+        <div class="p-4 rounded-xl border border-slate-200 space-y-1">
+          <span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[11px] font-semibold">${pr.jenis_konten}</span>
+          <div class="font-bold text-sm">${pr.judul}</div>
+          <div class="text-xs text-slate-600">Produk: ${pr.nama_produk} • Harga Promo: Rp ${Number(pr.harga_promo).toLocaleString("id-ID")}</div>
+          <div class="text-xs text-slate-400">File: ${pr.file_url}</div>
+        </div>
+      `).join("");
+
+      document.getElementById("promoAdminList").innerHTML = promoCards || '<p class="text-xs text-slate-400">Belum ada promo aktif.</p>';
+      document.getElementById("creativeList").innerHTML = promoCards || '<p class="text-xs text-slate-400">Belum ada promo tersimpan.</p>';
+    }
+
+    async function addProduct(e) {
+      e.preventDefault();
+      await fetch(`${API_BASE}/products.php`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "create",
+          nama_produk: document.getElementById("prodName").value,
+          kategori: document.getElementById("prodCat").value,
+          harga: Number(document.getElementById("prodPrice").value),
+          stok: Number(document.getElementById("prodStock").value),
+          foto: ""
+        })
+      });
+      e.target.reset();
+      await loadFromServer();
+    }
+
+    async function updateStock(idProduk, stokBaru) {
+      await fetch(`${API_BASE}/products.php`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "update_stock",
+          id_produk: idProduk,
+          stok: Math.max(0, stokBaru)
+        })
+      });
+      await loadFromServer();
+    }
+
+    async function publishPromoAdmin(e) {
+      e.preventDefault();
+      await fetch(`${API_BASE}/promos.php`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          judul: document.getElementById("admPromoTitle").value,
+          jenis_konten: document.getElementById("admPromoType").value,
+          file_url: document.getElementById("admPromoFile").value,
+          nama_produk: document.getElementById("admPromoProduct").value,
+          harga_promo: Number(document.getElementById("admPromoPrice").value)
+        })
+      });
+      e.target.reset();
+      await loadFromServer();
+    }
+
+    async function uploadCreativePromo(e) {
+      e.preventDefault();
+      await fetch(`${API_BASE}/promos.php`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          judul: document.getElementById("crTitle").value,
+          jenis_konten: document.getElementById("crType").value,
+          file_url: document.getElementById("crFile").value,
+          nama_produk: document.getElementById("crProduct").value,
+          harga_promo: Number(document.getElementById("crPrice").value)
+        })
+      });
+      e.target.reset();
+      await loadFromServer();
+    }
+  </script>
+</body>
+</html>
